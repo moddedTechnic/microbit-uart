@@ -1,0 +1,8 @@
+[package]
+name = "microbit-uart"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+embedded-io = "0.6.1"
+nrf52833-hal = { git = "https://github.com/moddedTechnic/nrf-hal.git" }
