@@ -17,6 +17,24 @@ impl<T: Instance> UartPort<T> {
         Ok(buffer.len())
     }
 
+    pub fn read_until(
+        &mut self,
+        delimiter: u8,
+        buffer: &mut [u8],
+    ) -> Result<usize, Error> {
+        let mut i = 0;
+        for item in &mut *buffer {
+            let mut buffer = [0];
+            self.1.read(&mut buffer)?;
+            *item = buffer[0];
+            i += 1;
+            if *item == delimiter {
+                break;
+            }
+        }
+        Ok(i)
+    }
+
     pub async fn read_until_async(
         &mut self,
         delimiter: u8,
