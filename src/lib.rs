@@ -1,7 +1,6 @@
 #![no_std]
 
-use core::future::Future;
-use core::{fmt, ptr::addr_of_mut};
+use core::{fmt, future::Future, ptr::addr_of_mut};
 use embedded_io::{Read, ReadReady, Write, WriteReady};
 use nrf52833_hal::uarte::{Error, Instance, Uarte, UarteRx, UarteTx};
 
@@ -11,15 +10,6 @@ static mut RX_BUF: [u8; 1] = [0; 1];
 pub struct UartPort<T: Instance>(UarteTx<T>, UarteRx<T>);
 
 impl<T: Instance> UartPort<T> {
-    pub fn new(serial: Uarte<T>) -> UartPort<T> {
-        let (tx, rx) = serial
-            .split(unsafe { addr_of_mut!(TX_BUF).as_mut().unwrap() }, unsafe {
-                addr_of_mut!(RX_BUF).as_mut().unwrap()
-            })
-            .unwrap();
-        UartPort(tx, rx)
-    }
-
     pub async fn read_async(&mut self, buffer: &mut [u8]) -> Result<usize, Error> {
         for item in &mut *buffer {
             *item = ReadFuture { rx: &mut self.1 }.await?;
@@ -41,6 +31,17 @@ impl<T: Instance> UartPort<T> {
             }
         }
         Ok(i)
+    }
+}
+
+impl<T: Instance> TryFrom<Uarte<T>> for UartPort<T> {
+    type Error = Error;
+
+    fn try_from(value: Uarte<T>) -> Result<Self, Self::Error> {
+        let (tx, rx) = value.split(unsafe { addr_of_mut!(TX_BUF).as_mut().unwrap() }, unsafe {
+            addr_of_mut!(RX_BUF).as_mut().unwrap()
+        })?;
+        Ok(UartPort(tx, rx))
     }
 }
 
